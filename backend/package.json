@@ -1,0 +1,25 @@
+{
+  "name": "yourleet",
+  "version": "1.0.0",
+  "description": "This is the project for leet code style platform",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iamashishshah/yourleet.git"
+  },
+  "keywords": [
+    "fullstack",
+    "node",
+    "express",
+    "leetcode"
+  ],
+  "author": "Ashish Shah",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/iamashishshah/yourleet/issues"
+  },
+  "homepage": "https://github.com/iamashishshah/yourleet#readme"
+}
