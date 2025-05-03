@@ -103,6 +103,13 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
     try {
+        const token = req.cookies?.["jwt-token"]
+        if(!token){
+            return res.status(400).json({
+                message: "No active session found. User already logged out.",
+                success: false
+            })
+        }
         res.clearCookie("jwt-token", {
             httpOnly: true,
             sameSite: "strict",
