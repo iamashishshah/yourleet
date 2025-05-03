@@ -56,6 +56,7 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
+    //TODO: if you're already logged in then you can't
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -102,13 +103,14 @@ const login = async (req, res) => {
 };
 
 const logout = async (req, res) => {
+    //TODO: if you're loggedout the can't acceess to me
     try {
-        const token = req.cookies?.["jwt-token"]
-        if(!token){
+        const token = req.cookies?.["jwt-token"];
+        if (!token) {
             return res.status(400).json({
                 message: "No active session found. User already logged out.",
-                success: false
-            })
+                success: false,
+            });
         }
         res.clearCookie("jwt-token", {
             httpOnly: true,
@@ -128,7 +130,6 @@ const logout = async (req, res) => {
         });
     }
 };
-
 
 const me = async (req, res) => {};
 
