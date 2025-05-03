@@ -101,7 +101,27 @@ const login = async (req, res) => {
     }
 };
 
-const logout = async (req, res) => {};
+const logout = async (req, res) => {
+    try {
+        res.clearCookie("jwt-token", {
+            httpOnly: true,
+            sameSite: "strict",
+            secure: process.env.NODE_ENV === "production",
+        });
+
+        return res.status(200).json({
+            message: "User logged out successfully.",
+            success: true,
+        });
+    } catch (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({
+            error: "Internal server error during logout.",
+            success: false,
+        });
+    }
+};
+
 
 const me = async (req, res) => {};
 
