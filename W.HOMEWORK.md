@@ -1,0 +1,4 @@
+[Notion link to improve features](https://organic-citipati-da4.notion.site/1d7e8b262f268085bf3cf3bb22ed68f8)
+[Syntax Highlighting tool Link](https://shiki.style/)
+[Judge0 Link](https://judge0.com/)
+[Conventional Commits Article Link](https://www.conventionalcommits.org/en/v1.0.0/#summary)
