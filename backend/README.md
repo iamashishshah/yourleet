@@ -16,3 +16,7 @@ npx prisma migrate dev
 ```bash
 npx prisma db push
 ```
+To generate random key
+```bash
+openssl rand -hex 32
+```
