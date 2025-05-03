@@ -35,7 +35,7 @@ const register = async (req, res) => {
         res.cookie("jwt-token", token, {
             httpOnly: true,
             sameSite: "strict",
-            secure: process.env.NODE_ENV === "production",
+            secure: process.env.NODE_ENV === "development",
             maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         });
 
@@ -55,7 +55,51 @@ const register = async (req, res) => {
     }
 };
 
-const login = async (req, res) => {};
+const login = async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ message: "All fields are required." });
+    }
+
+    try {
+        const user = await db.user.findUnique({ where: { email } });
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ error: "Invalid credentials." });
+        }
+
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_TOKEN, {
+            expiresIn: "7d",
+        });
+
+        res.cookie("jwt-token", token, {
+            httpOnly: true,
+            sameSite: "strict",
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        });
+
+        return res.status(200).json({
+            message: "Login successful.",
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                imageLink: user.image || null,
+            },
+        });
+    } catch (err) {
+        console.error("Login error:", err);
+        return res.status(500).json({ error: "Internal server error." });
+    }
+};
 
 const logout = async (req, res) => {};
 
