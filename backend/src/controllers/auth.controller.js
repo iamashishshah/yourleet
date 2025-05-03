@@ -131,6 +131,21 @@ const logout = async (req, res) => {
     }
 };
 
-const me = async (req, res) => {};
+const me = async (req, res) => {
+    //TODO: if you're not signed in  or logged out then you can't access me
+    try {
+        return res.status(200).json({
+            success: true,
+            message: "User authenticated successfully",
+            user: req.user,
+        });
+    } catch (error) {
+        console.error("Error checking user: ", error);
+        res.status(500).json({
+            success: false,
+            message: "Error while checking user.",
+        });
+    }
+};
 
 export { register, login, logout, me };
