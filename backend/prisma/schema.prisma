@@ -19,6 +19,12 @@ enum UserRole{
   USER
 }
 
+enum Defficulty{
+    EASY 
+    MEDIUM
+    HARD  
+}
+
 model User{
   id String @id @default(uuid())
   name String?
@@ -28,4 +34,29 @@ model User{
   password String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  problem Problem[]
+}
+
+model Problem{
+  id String @id @default(uuid())
+  title String
+  description String
+  difficulty Defficulty @default(EASY)
+  tag String[] // ["dp", "two pointer", "array", "hard"]
+  userId String // id of the user who created the problem
+  examples Json
+  constraints String
+  hints String?
+  editorial String?
+
+  testcases Json
+  codesnippet Json
+  referenceSolutions Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relation to user model so that we can track user creted problem
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
