@@ -72,18 +72,29 @@ nano judge0.conf
 # Start only the 'db' and 'redis' services defined in docker-compose.yml
 sudo docker-compose up -d db redis
 
+# Wait for 10s so that redis and db can initialize because we'll require this in later work
+sleep 10s
+
+# Start all other service that are in docker-compose.yaml file in detach mode
+sudo docker-compose up -d
+
 # Verify that the services are running
 sudo docker ps
 
 # (Optional) Stop and remove the running containers
-sudo docker-compose down
+sudo docker-compose down/stop
 
 # Exit the WSL environment
 exit
+
+sudo docker-compose up -d db redis
+sleep 10s
+sudo docker-compose up -d
+sleep 5s
 ```
 
 
 
 
 
-We can also use the judge0 which is hosted on rapid api or other platform to get access directly from and send our code to them and execute it.
+We can also use the judge0 which is hosted on rapid api, sulu judge0 or other platform to get access directly from and send our code to them and execute it.

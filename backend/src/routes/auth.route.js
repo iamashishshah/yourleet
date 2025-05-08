@@ -10,4 +10,6 @@ authRoutes.post("/login", login);
 authRoutes.post("/logout", authMiddleware, logout);
 authRoutes.get("/me", authMiddleware, me);
 
+
+
 export default authRoutes;
