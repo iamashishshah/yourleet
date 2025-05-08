@@ -44,3 +44,48 @@ export const submitTestCases = async (submissions) => {
         throw new Error("Failed to submit test cases to Judge0.");
     }
 };
+
+
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Polls Judge0 until all submissions are complete.
+ * @param {string[]} tokens - Array of submission tokens.
+ * @param {number} [maxRetries=30] - Maximum number of polling attempts.
+ * @param {number} [interval=1000] - Interval between polls (ms).
+ * @returns {Promise<Array<Object>>} Final submission results.
+ * @throws {Error} If polling exceeds retry limit or request fails.
+ */
+export const pollBatchResult = async (tokens, maxRetries = 30, interval = 1000) => {
+    let attempts = 0;
+
+    while (attempts < maxRetries) {
+        try {
+            const { data } = await axios.get(`${process.env.JUDGE0_API_URI}/submissions/batch`, {
+                params: {
+                    tokens: tokens.join(","),
+                    base64_encoded: false,
+                },
+            });
+
+            const results = data.submissions;
+
+            if (!Array.isArray(results)) {
+                throw new Error("Invalid response from Judge0 API.");
+            }
+
+            const isAllDone = results.every((res) => res.status?.id > 2);
+
+            if (isAllDone) return results;
+            
+            await sleep(interval);
+            attempts++;
+        } catch (error) {
+            console.error("pollBatchResult error:", error.message);
+            throw new Error("Failed to poll Judge0 for submission results.");
+        }
+    }
+
+    throw new Error("Polling timed out. Submissions took too long to complete.");
+};
