@@ -43,7 +43,7 @@ model Problem{
   title String
   description String
   difficulty Defficulty @default(EASY)
-  tag String[] // ["dp", "two pointer", "array", "hard"]
+  tags String[] // ["dp", "two pointer", "array", "hard"]
   userId String // id of the user who created the problem
   examples Json
   constraints String

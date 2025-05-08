@@ -1,11 +1,13 @@
-export const getAllProblems = (req, res) => {};
+import { db } from "../libs/db.js";
+import { getJudge0LanguageId, pollBatchResult, submitTestCases } from "../libs/judge0.lib.js";
 
-export const createProblem = (req, res) => {};
 
-export const getProblemById = (req, res) => {};
+export const getAllProblems = async (req, res) => {};
 
-export const updateProblem = (req, res) => {};
+export const getProblemById = async (req, res) => {};
 
-export const deleteProblem = (req, res) => {};
+export const updateProblem = async (req, res) => {};
 
-export const getAllProblmesSolvedByUser = (req, res) => {};
+export const deleteProblem = async (req, res) => {};
+
+export const getAllProblmesSolvedByUser = async (req, res) => {};
