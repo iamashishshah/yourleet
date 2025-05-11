@@ -93,7 +93,22 @@ sudo docker-compose up -d
 sleep 5s
 ```
 
+## steps follow to run the project from local machine docker, judge0 
+```bash
+# go to wsl -d Ubuntu and run these cmd line so that judge0 and related db can run there in there docker
+sudo docker-compose up -d db redis
+sleep 10s  # Wait for services to initialize
 
+sudo docker-compose up -d
+sleep 5s  # Wait for services to fully start
+
+
+# keep up local machine docker where you're using your database
+
+# Node.js:
+npm run dev
+
+```
 
 
 
