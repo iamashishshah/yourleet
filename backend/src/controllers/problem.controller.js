@@ -120,7 +120,7 @@ export const createProblem = async (req, res) => {
 };
 
 export const updateProblem = async (req, res) => {
-    console.log("Did i reach here")
+    console.log("Did i reach here");
     const {
         title,
         description,
@@ -212,7 +212,7 @@ export const updateProblem = async (req, res) => {
         // ✅ Save to DB if all tests pass
         const updatedProblem = await db.problem.update({
             where: {
-                id
+                id,
             },
             data: {
                 title,
@@ -277,7 +277,55 @@ export const getProblemById = async (req, res) => {
     }
 };
 
-export const getAllProblems = async(req, res) =>{}
+export const deleteProblem = async (req, res) => {
+    const { id } = req.params;
+    if (!id) {
+        return res.status(400).json({
+            success: false,
+            message: "Missing or invalid required fields in request params.",
+        });
+    }
 
-export const deleteProblem = async (req, res) =>{}
+    if (!req.user || req.user.role !== "ADMIN") {
+        return res.status(403).json({
+            success: false,
+            message: "Access denied — Admins only.",
+        });
+    }
+
+    try {
+        const problem = await db.problem.findUnique({
+            where: {
+                id,
+            },
+        });
+
+        if (!problem) {
+            return res.status(404).json({
+                success: false,
+                message: "Problem does not exist.",
+            });
+        }
+
+        const result = await db.problem.delete({
+            where: { id },
+        });
+
+        console.log("What's prisma is returning after deletion: ", result);
+
+        res.status(200).json({
+            success: true,
+            message: "Problem deleted successfully.",
+            result,
+        });
+    } catch (error) {
+        console.error("Error in deleting a problem: ", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+        });
+    }
+};
+
+export const getAllProblems = async (req, res) => {};
 export const getAllProblmesSolvedByUser = async (req, res) => {};

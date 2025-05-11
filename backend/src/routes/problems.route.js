@@ -14,8 +14,8 @@ const problemRoutes = express.Router();
 problemRoutes.post("/", authMiddleware, checkAdmin, createProblem);
 problemRoutes.put("/:id", authMiddleware, checkAdmin, updateProblem);
 problemRoutes.get("/:id", authMiddleware, getProblemById);
-problemRoutes.get("/", authMiddleware, getAllProblems);
 problemRoutes.delete("/:id", authMiddleware, checkAdmin, deleteProblem);
+problemRoutes.get("/", authMiddleware, getAllProblems);
 problemRoutes.get("/me/solved-problems", authMiddleware, getAllProblmesSolvedByUser);
 
 problemRoutes.get("/test", (req, res) => {
