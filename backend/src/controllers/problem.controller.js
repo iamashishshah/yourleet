@@ -1,7 +1,6 @@
 import { db } from "../libs/db.js";
 import { getJudge0LanguageId, pollBatchResult, submitTestCases } from "../libs/judge0.lib.js";
 
-
 export const createProblem = async (req, res) => {
     const {
         title,
@@ -17,23 +16,26 @@ export const createProblem = async (req, res) => {
     } = req.body;
 
     //TODO: check all above things if all are present or not?
-    if (
-        !title ||
-        !description ||
-        !difficulty ||
-        !examples ||
-        !constraints ||
-        !testcases ||
-        !codesnippet ||
-        !referenceSolutions
-    ) {
-        return res.status(400).json({
-            success: false,
-            message: "Missing required fields in request body.",
-        });
-    }
+    // if (
+    //     !title ||
+    //     !description ||
+    //     !Array.isArray(examples) ||
+    //     examples.length === 0 ||
+    //     !Array.isArray(constraints) ||
+    //     constraints.length === 0 ||
+    //     !Array.isArray(testcases) ||
+    //     testcases.length === 0 ||
+    //     !codesnippet ||
+    //     !referenceSolutions ||
+    //     !difficulty
+    // ) {
+    //     return res.status(400).json({
+    //         success: false,
+    //         message: "Missing or invalid required fields in request body.",
+    //     });
+    // }
 
-    if (req.user.role !== "ADMIN") {
+    if (!req.user || req.user.role !== "ADMIN") {
         return res.status(403).json({
             success: false,
             message: "Access denied — Admins only.",
@@ -64,6 +66,7 @@ export const createProblem = async (req, res) => {
             const tokens = submissionResult.map((result) => result.token);
             // now we got the token of each submission, we need to verify if our code has executed or not
             const results = await pollBatchResult(tokens, 40, 1000);
+            console.log("Result from db: ", results)
             const failedCaseIndex = results.findIndex((result) => result.status.id !== 3);
 
             if (failedCaseIndex !== -1) {
@@ -83,36 +86,36 @@ export const createProblem = async (req, res) => {
             //         });
             //     }
             // }
-
-            // ✅ Save to DB if all tests pass
-            const newProblem = await db.problem.create({
-                data: {
-                    title,
-                    description,
-                    hints,
-                    tags,
-                    difficulty,
-                    examples,
-                    constraints,
-                    testcases,
-                    codesnippet,
-                    referenceSolutions,
-                    userId: req.user.id,
-                },
-            });
-
-            return res.status(201).json({
-                success: true,
-                message: "Problem created successfully.",
-                problem: newProblem,
-            });
         }
+
+        // ✅ Save to DB if all tests pass
+        const newProblem = await db.problem.create({
+            data: {
+                title,
+                description,
+                hints,
+                tags,
+                difficulty,
+                examples,
+                constraints,
+                testcases,
+                codesnippet,
+                referenceSolutions,
+                userId: req.user.id,
+            },
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Problem created successfully.",
+            problem: newProblem,
+        });
     } catch (error) {
-        console.error("createProblem error: ", error)
+        console.error("createProblem error: ", error);
         return res.status(500).json({
             success: false,
-            message: "Internal server error."
-        })
+            message: "Internal server error.",
+        });
     }
 };
 

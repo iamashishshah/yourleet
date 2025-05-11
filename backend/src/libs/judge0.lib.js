@@ -1,5 +1,5 @@
 import axios from "axios";
-import { JUDGE0_LANGUAGES } from "../constants/judge0Language";
+import { JUDGE0_LANGUAGES } from "../constants/judge0Language.js";
 
 export const getJudge0LanguageId = (language) => {
     if (!language) return null;
@@ -33,12 +33,12 @@ export const submitTestCases = async (submissions) => {
         );
 
         const { data } = response;
-
-        if (!data || !Array.isArray(data.submissions)) {
+        console.log("data from judge0 is: ", data)
+        if (!data || !Array.isArray(data)) {
             throw new Error("Invalid response format from Judge0 API.");
         }
 
-        return data.submissions; // [{ token: "abc" }, { token: "def" }]
+        return data; // [{ token: "abc" }, { token: "def" }]
     } catch (error) {
         console.error("submitTestCases error:", error.message);
         throw new Error("Failed to submit test cases to Judge0.");

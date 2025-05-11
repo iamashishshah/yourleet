@@ -11,8 +11,8 @@ import {
 
 const problemRoutes = express.Router();
 
+problemRoutes.post("/create", authMiddleware, checkAdmin, createProblem);
 problemRoutes.get("/", authMiddleware, getAllProblems);
-problemRoutes.post("/", authMiddleware, checkAdmin, createProblem);
 problemRoutes.get("/:id", authMiddleware, getProblemById);
 problemRoutes.put("/:id", authMiddleware, checkAdmin, updateProblem);
 problemRoutes.delete("/:id", authMiddleware, checkAdmin, deleteProblem);
