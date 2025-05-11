@@ -66,7 +66,7 @@ export const createProblem = async (req, res) => {
             const tokens = submissionResult.map((result) => result.token);
             // now we got the token of each submission, we need to verify if our code has executed or not
             const results = await pollBatchResult(tokens, 40, 1000);
-            console.log("Result from db: ", results)
+            console.log("Result from db: ", results);
             const failedCaseIndex = results.findIndex((result) => result.status.id !== 3);
 
             if (failedCaseIndex !== -1) {
@@ -119,12 +119,130 @@ export const createProblem = async (req, res) => {
     }
 };
 
-export const getAllProblems = async (req, res) => {};
+export const updateProblem = async (req, res) => {
+    console.log("Did i reach here")
+    const {
+        title,
+        description,
+        hints,
+        tags,
+        difficulty,
+        examples,
+        constraints,
+        testcases,
+        codesnippet,
+        referenceSolutions,
+    } = req.body;
 
-export const getProblemById = async (req, res) => {};
+    const { id } = req.params;
 
-export const updateProblem = async (req, res) => {};
+    if (!id) {
+        return res.status(400).json({
+            success: false,
+            message: "Missing or invalid required fields in request params.",
+        });
+    }
 
-export const deleteProblem = async (req, res) => {};
+    if (!req.user || req.user.role !== "ADMIN") {
+        return res.status(403).json({
+            success: false,
+            message: "Access denied — Admins only.",
+        });
+    }
+
+    try {
+        // try to find if the problem exist or not the will update
+        const problem = await db.problem.findUnique({
+            where: {
+                id,
+            },
+        });
+
+        if (!problem) {
+            return res.status(404).json({
+                success: false,
+                message: "Problem does not found.",
+            });
+        }
+
+        // We'll collect all test results for all languages
+        for (const [language, exampleCode] of Object.entries(referenceSolutions)) {
+            const languageId = getJudge0LanguageId(language);
+
+            if (!languageId) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Unsupported language: ${language}`,
+                });
+            }
+
+            const submissions = testcases.map(({ input, output }) => ({
+                source_code: exampleCode,
+                language_id: languageId,
+                stdin: input,
+                expected_output: output,
+            }));
+
+            const submissionResult = await submitTestCases(submissions);
+            const tokens = submissionResult.map((result) => result.token);
+            // now we got the token of each submission, we need to verify if our code has executed or not
+            const results = await pollBatchResult(tokens, 40, 1000);
+            console.log("Result from db: ", results);
+            const failedCaseIndex = results.findIndex((result) => result.status.id !== 3);
+
+            if (failedCaseIndex !== -1) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Test case ${failedCaseIndex + 1} failed for ${language}.`,
+                });
+            }
+
+            // for (let i = 0; i < results.length; i++) {
+            //     const result = results[i];
+
+            //     if (result.status.id !== 3) {
+            //         return res.status(400).json({
+            //             success: false,
+            //             error: `Test case ${i + 1} failed for language ${language}`,
+            //         });
+            //     }
+            // }
+        }
+
+        // ✅ Save to DB if all tests pass
+        const updatedProblem = await db.problem.update({
+            where: {
+                id
+            },
+            data: {
+                title,
+                description,
+                hints,
+                tags,
+                difficulty,
+                examples,
+                constraints,
+                testcases,
+                codesnippet,
+                referenceSolutions,
+                userId: req.user.id,
+            },
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Problem updated successfully.",
+            problem: updatedProblem,
+        });
+    } catch (error) {
+        console.error("Error while updating problem: ", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+        });
+    }
+};
+
+
 
 export const getAllProblmesSolvedByUser = async (req, res) => {};
