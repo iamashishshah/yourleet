@@ -243,6 +243,41 @@ export const updateProblem = async (req, res) => {
     }
 };
 
+export const getProblemById = async (req, res) => {
+    const { id } = req.params;
+    if (!id) {
+        return res.status(400).json({
+            success: false,
+            message: "Missing or invalid required fields in request params.",
+        });
+    }
 
+    try {
+        const problem = await db.problem.findUnique({
+            where: { id },
+        });
+        if (!problem) {
+            return res.status(404).json({
+                success: false,
+                message: "Problem does not found.",
+            });
+        }
 
+        res.status(200).json({
+            success: true,
+            message: "Problem fetched successfully.",
+            problem,
+        });
+    } catch (error) {
+        console.error("get problem by id error: ", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+        });
+    }
+};
+
+export const getAllProblems = async(req, res) =>{}
+
+export const deleteProblem = async (req, res) =>{}
 export const getAllProblmesSolvedByUser = async (req, res) => {};
