@@ -19,7 +19,7 @@ enum UserRole {
   USER
 }
 
-enum Defficulty {
+enum Difficulty {
   EASY
   MEDIUM
   HARD
@@ -51,7 +51,7 @@ model Problem {
   id                 String     @id @default(uuid())          // Primary key
   title              String                                  // Problem title
   description        String                                  // Problem description
-  difficulty         Defficulty @default(EASY)               // Enum: EASY, MEDIUM, HARD
+  difficulty         Difficulty @default(EASY)               // Enum: EASY, MEDIUM, HARD
   tags               String[]                                // e.g., ["dp", "two-pointer", "array"]
   userId             String                                  // FK to User who created this problem
   examples           Json                                    // Input/output examples
