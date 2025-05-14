@@ -19,11 +19,21 @@ enum UserRole {
   USER
 }
 
-enum Defficulty {
+enum Difficulty {
   EASY
   MEDIUM
   HARD
 }
+
+//TODO: implement this
+// enum SubmissionStatus {
+//   accepted
+//   wrong_answer
+//   compilation_error
+//   runtime_error
+//   time_limit_exceeded
+//   memory_limit_exceeded
+// }
 
 model User {
   id        String   @id @default(uuid())
@@ -35,28 +45,84 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  problem Problem[]
+  problem       Problem[]
+  submission    Submission[]
+  problemSolved ProblemSolved[]
 }
 
 model Problem {
-  id          String     @id @default(uuid())
-  title       String
-  description String
-  difficulty  Defficulty @default(EASY)
-  tags        String[] // ["dp", "two pointer", "array", "hard"]
-  userId      String // id of the user who created the problem
-  examples    Json
-  constraints String
-  hints       String?
-  editorial   String?
+  id                 String     @id @default(uuid()) // Primary key
+  title              String // Problem title
+  description        String // Problem description
+  difficulty         Difficulty @default(EASY) // Enum: EASY, MEDIUM, HARD
+  tags               String[] // e.g., ["dp", "two-pointer", "array"]
+  userId             String // FK to User who created this problem
+  examples           Json // Input/output examples
+  constraints        String // Constraints description
+  hints              String? // Optional hints for solving the problem
+  editorial          String? // Optional link or markdown explanation
+  testcases          Json // Test cases to validate solution
+  codesnippet        Json // Starter code snippets per language
+  referenceSolutions Json // Reference solutions for validation
+  createdAt          DateTime   @default(now()) // Record creation timestamp
+  updatedAt          DateTime   @updatedAt // Auto-updated on modification
 
-  testcases          Json
-  codesnippet        Json
-  referenceSolutions Json
+  // Relations
+  submissions Submission[] // All submissions for this problem
+  solvedBy    ProblemSolved[]
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Submission {
+  id            String   @id @default(uuid()) // Primary key
+  userId        String // FK to User
+  problemId     String // FK to Problem
+  sourceCode    Json // Submitted source code
+  language      String // Programming language used
+  stdin         String? // Input to the program
+  stdout        String? // Output from the program
+  stderr        String? // Error output
+  compileOutput String? // Compiler messages
+  status        String // e.g., accepted, wrong_answer, etc.
+  memory        String? // Memory usage
+  time          String? // Execution time
+  createdAt     DateTime @default(now()) // Submission creation time
+  updatedAt     DateTime @updatedAt // Auto-updated on modification
 
-  // relation to user model so that we can track user creted problem
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem   Problem          @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  testCases TestCaseResult[]
+}
+
+model TestCaseResult {
+  id            String   @id @default(uuid()) // Primary key
+  submissionId  String // FK to Submission
+  testCase      Int // Test case number/index
+  isPassed      Boolean // Whether this test case passed
+  stdout        String? // Output from the program
+  expected      String // Expected output
+  stderr        String? // Error output, if any
+  compileOutput String? // Compilation messages (if applicable)
+  status        String // Result status (e.g., passed, failed, error)
+  memory        String? // Memory used
+  time          String? // Time taken
+  createdAt     DateTime @default(now()) // Record creation time
+  updatedAt     DateTime @updatedAt // Auto-updated on modification
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId]) // Index for faster lookup by submission
+}
+
+model ProblemSolved {
+  id        String   @id @default(uuid()) // Primary key
+  userId    String // FK to User
+  problemId String // FK to Problem
+  createdAt DateTime @default(now()) // Record creation timestamp
+  updatedAt DateTime @updatedAt // Auto-updated on modification
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, problemId]) // Prevents duplicate entries for same user-problem pair
 }
