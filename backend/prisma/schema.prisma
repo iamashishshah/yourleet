@@ -45,8 +45,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  problem    Problem[]
-  submission Submission[]
+  problem       Problem[]
+  submission    Submission[]
+  problemSolved ProblemSolved[]
 }
 
 model Problem {
@@ -68,7 +69,8 @@ model Problem {
 
   // Relations
   submissions Submission[] // All submissions for this problem
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  solvedBy    ProblemSolved[]
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Submission {
@@ -91,22 +93,35 @@ model Submission {
   problem   Problem          @relation(fields: [problemId], references: [id], onDelete: Cascade)
   testCases TestCaseResult[]
 }
+
 model TestCaseResult {
-  id             String     @id @default(uuid())           // Primary key
-  submissionId   String                                   // FK to Submission
-  testCase       Int                                      // Test case number/index
-  isPassed       Boolean                                  // Whether this test case passed
-  stdout         String?                                  // Output from the program
-  expected       String                                   // Expected output
-  stderr         String?                                  // Error output, if any
-  compileOutput  String?                                  // Compilation messages (if applicable)
-  status         String                                   // Result status (e.g., passed, failed, error)
-  memory         String?                                  // Memory used
-  time           String?                                  // Time taken
-  createdAt      DateTime   @default(now())               // Record creation time
-  updatedAt      DateTime   @updatedAt                    // Auto-updated on modification
+  id            String   @id @default(uuid()) // Primary key
+  submissionId  String // FK to Submission
+  testCase      Int // Test case number/index
+  isPassed      Boolean // Whether this test case passed
+  stdout        String? // Output from the program
+  expected      String // Expected output
+  stderr        String? // Error output, if any
+  compileOutput String? // Compilation messages (if applicable)
+  status        String // Result status (e.g., passed, failed, error)
+  memory        String? // Memory used
+  time          String? // Time taken
+  createdAt     DateTime @default(now()) // Record creation time
+  updatedAt     DateTime @updatedAt // Auto-updated on modification
 
-  submission     Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
-  @@index([submissionId])                                 // Index for faster lookup by submission
+  @@index([submissionId]) // Index for faster lookup by submission
+}
+model ProblemSolved {
+  id        String   @id @default(uuid())                // Primary key
+  userId    String                                      // FK to User
+  problemId String                                      // FK to Problem
+  createdAt DateTime @default(now())                    // Record creation timestamp
+  updatedAt DateTime @updatedAt                         // Auto-updated on modification
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, problemId])                         // Prevents duplicate entries for same user-problem pair
 }
