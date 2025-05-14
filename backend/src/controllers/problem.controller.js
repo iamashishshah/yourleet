@@ -327,5 +327,52 @@ export const deleteProblem = async (req, res) => {
     }
 };
 
-export const getAllProblems = async (req, res) => {};
-export const getAllProblmesSolvedByUser = async (req, res) => {};
+
+export const getAllProblems = async (req, res) => {
+    // I need first user id, and find the user
+    // validate the user if he's  admin or not
+    // find all  data from database and remove everything
+    // add all problems in an array and return to the user
+    try {
+        const problems = await db.problem.findMany({});
+        if (!problems) {
+            return res.status(404).json({
+                success: false,
+                error: "No problem is found.",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Problems fetched successfully.",
+            problems,
+        });
+    } catch (error) {
+        console.error("get All problems error: ", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+        });
+    }
+};
+
+// TODO: Implement public access to a user's solved problems by allowing requests using their username.
+// Create a route in the format: yourleet.com/u/:username
+
+
+/**
+ * Retrieves all problems solved by a user.
+ * 
+ * If the user is authenticated (e.g., via cookie or token), their solved problems
+ * are fetched using the authenticated user's information.
+ * 
+ * Alternatively, if this endpoint is intended for public access (e.g., to view another
+ * user's solved problems), the username must be provided in the request parameters.
+ * The solved problems will then be retrieved based on the provided username.
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export const getAllProblmesSolvedByUser = async (req, res) => {
+   
+};

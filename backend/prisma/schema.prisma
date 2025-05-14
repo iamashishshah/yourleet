@@ -34,7 +34,6 @@ model User{
   password String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   problem Problem[]
 }
 
@@ -49,14 +48,11 @@ model Problem{
   constraints String
   hints String?
   editorial String?
-
   testcases Json
   codesnippet Json
   referenceSolutions Json
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   // relation to user model so that we can track user creted problem
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
