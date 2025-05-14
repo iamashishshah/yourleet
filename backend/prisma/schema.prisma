@@ -47,28 +47,28 @@ model User {
   problem    Problem[]
   submission Submission[]
 }
-
 model Problem {
-  id                 String     @id @default(uuid())
-  title              String
-  description        String
-  difficulty         Defficulty @default(EASY)
-  tags               String[] // ["dp", "two pointer", "array", "hard"]
-  userId             String // id of the user who created the problem
-  examples           Json
-  constraints        String
-  hints              String?
-  editorial          String?
-  testcases          Json
-  codesnippet        Json
-  referenceSolutions Json
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
+  id                 String     @id @default(uuid())          // Primary key
+  title              String                                  // Problem title
+  description        String                                  // Problem description
+  difficulty         Defficulty @default(EASY)               // Enum: EASY, MEDIUM, HARD
+  tags               String[]                                // e.g., ["dp", "two-pointer", "array"]
+  userId             String                                  // FK to User who created this problem
+  examples           Json                                    // Input/output examples
+  constraints        String                                  // Constraints description
+  hints              String?                                 // Optional hints for solving the problem
+  editorial          String?                                 // Optional link or markdown explanation
+  testcases          Json                                    // Test cases to validate solution
+  codesnippet        Json                                    // Starter code snippets per language
+  referenceSolutions Json                                    // Reference solutions for validation
+  createdAt          DateTime   @default(now())              // Record creation timestamp
+  updatedAt          DateTime   @updatedAt                   // Auto-updated on modification
 
-  submission Submission[]
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade) // relation to user model so that we can track user creted problem
+  // Relations
+  submissions        Submission[]                            // All submissions for this problem
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
 model Submission {
   id             String   @id @default(uuid())      // Primary key
   userId         String                            // FK to User
