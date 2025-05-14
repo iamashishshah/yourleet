@@ -87,6 +87,7 @@ sudo docker-compose down/stop
 # Exit the WSL environment
 exit
 
+go to this folder: /mnt/c/Users/iamas/judge0-v1.13.1
 sudo docker-compose up -d db redis
 sleep 10s
 sudo docker-compose up -d

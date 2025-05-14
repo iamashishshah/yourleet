@@ -63,6 +63,7 @@ export const createProblem = async (req, res) => {
             }));
 
             const submissionResult = await submitTestCases(submissions);
+
             const tokens = submissionResult.map((result) => result.token);
             // now we got the token of each submission, we need to verify if our code has executed or not
             const results = await pollBatchResult(tokens, 40, 1000);

@@ -113,15 +113,16 @@ model TestCaseResult {
 
   @@index([submissionId]) // Index for faster lookup by submission
 }
+
 model ProblemSolved {
-  id        String   @id @default(uuid())                // Primary key
-  userId    String                                      // FK to User
-  problemId String                                      // FK to Problem
-  createdAt DateTime @default(now())                    // Record creation timestamp
-  updatedAt DateTime @updatedAt                         // Auto-updated on modification
+  id        String   @id @default(uuid()) // Primary key
+  userId    String // FK to User
+  problemId String // FK to Problem
+  createdAt DateTime @default(now()) // Record creation timestamp
+  updatedAt DateTime @updatedAt // Auto-updated on modification
 
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, problemId])                         // Prevents duplicate entries for same user-problem pair
+  @@unique([userId, problemId]) // Prevents duplicate entries for same user-problem pair
 }

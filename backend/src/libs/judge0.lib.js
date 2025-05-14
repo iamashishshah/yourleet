@@ -22,6 +22,7 @@ export const getJudge0LanguageId = (language) => {
  */
 export const submitTestCases = async (submissions) => {
     try {
+        
         const response = await axios.post(
             `${process.env.JUDGE0_API_URI}/submissions/batch?base64_encoded=false`,
             { submissions }, // Judge0 expects `{ submissions: [...] }`
@@ -31,7 +32,7 @@ export const submitTestCases = async (submissions) => {
                 },
             },
         );
-
+        
         const { data } = response;
         console.log("data from judge0 is: ", data)
         if (!data || !Array.isArray(data)) {
@@ -68,7 +69,7 @@ export const pollBatchResult = async (tokens, maxRetries = 30, interval = 1000) 
                     base64_encoded: false,
                 },
             });
-
+            
             const results = data.submissions;
 
             if (!Array.isArray(results)) {
