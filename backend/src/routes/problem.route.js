@@ -4,7 +4,7 @@ import {
     createProblem,
     deleteProblem,
     getAllProblems,
-    getAllProblmesSolvedByUser,
+    getAllProblemsSolvedByUser,
     getProblemById,
     updateProblem,
 } from "../controllers/problem.controller.js";
@@ -16,7 +16,7 @@ problemRoutes.put("/:id", authMiddleware, checkAdmin, updateProblem);
 problemRoutes.get("/:id", authMiddleware, getProblemById);
 problemRoutes.delete("/:id", authMiddleware, checkAdmin, deleteProblem);
 problemRoutes.get("/", authMiddleware, getAllProblems);
-problemRoutes.get("/me/solved-problems", authMiddleware, getAllProblmesSolvedByUser);
+problemRoutes.get("/me/solved-problems", authMiddleware, getAllProblemsSolvedByUser);
 
 problemRoutes.get("/test", (req, res) => {
     res.send("Problem router is working perfectly fine.");

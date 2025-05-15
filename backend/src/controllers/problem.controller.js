@@ -328,7 +328,6 @@ export const deleteProblem = async (req, res) => {
     }
 };
 
-
 export const getAllProblems = async (req, res) => {
     // I need first user id, and find the user
     // validate the user if he's  admin or not
@@ -362,17 +361,54 @@ export const getAllProblems = async (req, res) => {
 
 /**
  * Retrieves all problems solved by a user.
- * 
+ *
  * If the user is authenticated (e.g., via cookie or token), their solved problems
  * are fetched using the authenticated user's information.
- * 
+ *
  * Alternatively, if this endpoint is intended for public access (e.g., to view another
  * user's solved problems), the username must be provided in the request parameters.
  * The solved problems will then be retrieved based on the provided username.
- * 
+ *
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
-export const getAllProblmesSolvedByUser = async (req, res) => {
-   
+export const getAllProblemsSolvedByUser = async (req, res) => {
+    const userId = req.user.id;
+
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    try {
+        const problems = await db.problem.findMany({
+            where: {
+                solvedBy: {
+                    some: {
+                        userId,
+                    },
+                },
+            },
+            include: {
+                solvedBy: {
+                    where: {
+                        userId,
+                    },
+                },
+            },
+            skip: Number(skip),
+            take: Number(limit),
+        });
+
+        res.status(200).json({
+            success: true,
+            messsage: "All problems solved by user.",
+            problems,
+        });
+    } catch (error) {
+        console.error(`[ERROR] Failed to fetch problems solved by user ${userId}:`, error);
+
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+        });
+    }
 };
