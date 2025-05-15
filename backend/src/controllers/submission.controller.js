@@ -87,4 +87,31 @@ export const getSubmissions = async (req, res) => {
         });
     }
 };
-export const getSubmissionCountForProblem = async (req, res) => {};
+
+export const getProblemSubmissionsCount = async (req, res) => {
+    const problemId = req.params?.problemId;
+
+    if (!problemId) {
+        return res.status(400).json({
+            success: false,
+            message: "Missing or invalid problem ID.",
+        });
+    }
+
+    try {
+        const count = await db.submission.count({
+            where: { problemId },
+        });
+        res.status(200).json({
+            success: true,
+            message: "Submission count retrieved successfully.",
+            count,
+        });
+    } catch (error) {
+       console.error(`[ERROR] Failed to fetch submission count for problem ${problemId}:`, error);
+        return res.status(500).json({
+            success: false,
+            message: "Unable to retrieve submissions count at the moment. Please try again later.",
+        });
+    }
+};
