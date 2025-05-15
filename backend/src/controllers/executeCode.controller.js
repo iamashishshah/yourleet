@@ -1,77 +1,112 @@
 import { pollBatchResult, submitTestCases } from "../libs/judge0.lib.js";
 
 export const runCode = async (req, res) => {
-    const { sourceCode, languageId, inputes, expectedOutputes, problemId } = req.body;
+    const {
+        sourceCode,
+        languageId,
+        inputes: testInputs,
+        expectedOutputes: expectedOutputs,
+        problemId,
+    } = req.body;
+
     const userId = req.user.id;
 
-    if (!sourceCode || !languageId || !inputes || !expectedOutputes || !problemId) {
+    // Validate required fields
+    if (!sourceCode || !languageId || !testInputs || !expectedOutputs || !problemId) {
         return res.status(400).json({
             success: false,
             message: "Missing required fields.",
         });
     }
 
-    if (!Array.isArray(inputes) || !Array.isArray(expectedOutputes)) {
+    if (!Array.isArray(testInputs) || !Array.isArray(expectedOutputs)) {
         return res.status(400).json({
             success: false,
-            message: "Inputes and expected outputs must be arrays.",
+            message: "Test inputs and expected outputs must be arrays.",
         });
     }
 
-    if (inputes.length !== expectedOutputes.length) {
+    if (testInputs.length !== expectedOutputs.length) {
         return res.status(400).json({
             success: false,
-            message: "Inputes and expected outputs count mismatch.",
+            message: "Mismatch between number of test inputs and expected outputs.",
         });
     }
 
     try {
         // Prepare submissions for Judge0
-        const submissions = inputes.map((input) => ({
+        const submissionsPayload = testInputs.map((input) => ({
             source_code: sourceCode,
             language_id: languageId,
             stdin: input,
         }));
 
-        const submissionResult = await submitTestCases(submissions);
-        const tokens = submissionResult.map((result) => result.token);
+        const submissionResponses = await submitTestCases(submissionsPayload);
+        const submissionTokens = submissionResponses.map((response) => response.token);
 
-        // Polling for results from Judge0
-        const results = await pollBatchResult(tokens, 40, 1000);
+        // Polling for Judge0 execution results
+        const executionResults = await pollBatchResult(submissionTokens, 40, 1000);
 
-        if (!results) {
+        if (!executionResults) {
             return res.status(400).json({
                 success: false,
-                message: "Error in compilation of code.",
+                message: "Error during code compilation or execution.",
             });
         }
-        res.status(200).json({
-            success: true,
-            message: "Code compiled successfully.",
-        });
-        console.log("Result from judge0 after polling the batch: ", results);
 
-        const failedCaseIndex = results.findIndex((results) => results.status.id !== 3);
+        const firstFailureIndex = executionResults.findIndex(
+            (result) => result.status.id !== 3
+        );
 
-        let finalVerdict = "Accepted";
-        if (failedCaseIndex !== -1) {
-            finalVerdict = "Wrong Answer";
+        let verdict = "Accepted";
+        if (firstFailureIndex !== -1) {
+            verdict = "Wrong Answer";
         }
 
-        res.status(200).json({
+        // Analyze test case results
+        let cumulativeTime = 0;
+        let cumulativeMemory = 0;
+
+        const testCaseResults = executionResults.map((result, index) => {
+            cumulativeTime += Number(result.time?.trim()) || 0;
+            cumulativeMemory += Number(result.memory) || 0;
+
+            const actualOutput = result.stdout?.trim();
+            const expectedOutput = expectedOutputs[index]?.trim();
+
+            return actualOutput === expectedOutput;
+        });
+
+        const failedTestIndex = testCaseResults.findIndex((passed) => !passed);
+
+        if (failedTestIndex !== -1) {
+            return res.status(401).json({
+                success: false,
+                compilationMessage: "Code compiled successfully.",
+                message: `Wrong answer on test case ${failedTestIndex + 1}.`,
+                verdict,
+                caseResult: testCaseResults,
+            });
+        }
+
+        return res.status(200).json({
             success: true,
-            message: "Code compiled successfully.",
-            verdict: finalVerdict,
-            caseResult: results,
+            compilationMessage: "Code compiled successfully.",
+            message: "All test cases passed.",
+            verdict,
+            timeTaken: `${Math.floor(cumulativeTime * 1000)}ms`,
+            memoryUsed: `${(cumulativeMemory / 1024).toFixed(2)}MB`,
+            caseResult: testCaseResults,
         });
     } catch (error) {
-        console.error("submit code error: ", error);
+        console.error("Error while submitting code:", error);
         return res.status(500).json({
             success: false,
             message: "Internal server error.",
         });
     }
 };
+
 
 export const submitCode = async (req, res) => {
     // 1. Validate request body ✅

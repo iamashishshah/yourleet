@@ -360,7 +360,6 @@ export const getAllProblems = async (req, res) => {
 // TODO: Implement public access to a user's solved problems by allowing requests using their username.
 // Create a route in the format: yourleet.com/u/:username
 
-
 /**
  * Retrieves all problems solved by a user.
  * 

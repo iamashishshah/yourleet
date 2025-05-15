@@ -34,7 +34,7 @@ export const submitTestCases = async (submissions) => {
         );
         
         const { data } = response;
-        console.log("data from judge0 is: ", data)
+        // console.log("data from judge0 is: ", data)
         if (!data || !Array.isArray(data)) {
             throw new Error("Invalid response format from Judge0 API.");
         }
