@@ -1,15 +1,14 @@
-import { pollBatchResult, submitTestCases } from "../libs/judge0.lib.js";
+import { db } from "../libs/db.js";
+import { getLanguageName, pollBatchResult, submitTestCases } from "../libs/judge0.lib.js";
 
-export const runCode = async (req, res) => {
-    const {
-        sourceCode,
-        languageId,
-        inputes: testInputs,
-        expectedOutputes: expectedOutputs,
-        problemId,
-    } = req.body;
+export const submitCode = async (req, res) => {
+    const { sourceCode, languageId, testInputs, expectedOutputs, problemId } = req.body;
 
     const userId = req.user.id;
+
+    // console.log("How test inputs look like: ",testInputs)
+    // const arr = testInputs.join(" ")
+    // console.log("test inputs after joining it: ", arr)
 
     // Validate required fields
     if (!sourceCode || !languageId || !testInputs || !expectedOutputs || !problemId) {
@@ -42,6 +41,11 @@ export const runCode = async (req, res) => {
         }));
 
         const submissionResponses = await submitTestCases(submissionsPayload);
+        
+        if (!Array.isArray(submissionResponses) || submissionResponses.length === 0) {
+            throw new Error("Failed to get valid submission tokens from Judge0");
+        }
+
         const submissionTokens = submissionResponses.map((response) => response.token);
 
         // Polling for Judge0 execution results
@@ -54,9 +58,7 @@ export const runCode = async (req, res) => {
             });
         }
 
-        const firstFailureIndex = executionResults.findIndex(
-            (result) => result.status.id !== 3
-        );
+        const firstFailureIndex = executionResults.findIndex((result) => result.status.id !== 3);
 
         let verdict = "Accepted";
         if (firstFailureIndex !== -1) {
@@ -67,17 +69,58 @@ export const runCode = async (req, res) => {
         let cumulativeTime = 0;
         let cumulativeMemory = 0;
 
-        const testCaseResults = executionResults.map((result, index) => {
+        const resultsPerTestCase = executionResults.map((result, index) => {
             cumulativeTime += Number(result.time?.trim()) || 0;
             cumulativeMemory += Number(result.memory) || 0;
 
             const actualOutput = result.stdout?.trim();
             const expectedOutput = expectedOutputs[index]?.trim();
 
-            return actualOutput === expectedOutput;
+            return {
+                testCase: index + 1,
+                isPassed: expectedOutput === actualOutput,
+                stdout: actualOutput,
+                expected: expectedOutput,
+                stderr: result.stderr || null,
+                compileOutput: result.compile_output || null,
+                status: result.status.description,
+                memory: result.memory ? `${(result.memory / 1024).toFixed(2)}MB` : "0.00MB",
+                time: result.time ? `${Math.floor(result.time * 1000)}ms` : undefined,
+            };
         });
 
-        const failedTestIndex = testCaseResults.findIndex((passed) => !passed);
+        const language = getLanguageName(languageId);
+
+        const stdout = JSON.stringify(resultsPerTestCase.map((result) => result.stdout));
+
+        const stderr = resultsPerTestCase.some((result) => result.stderr)
+            ? JSON.stringify(resultsPerTestCase.map((result) => result.stderr))
+            : null;
+
+        const compileOutput = resultsPerTestCase.some((result) => result.compileOutput)
+            ? JSON.stringify(resultsPerTestCase.map((result) => result.compileOutput))
+            : null;
+
+        const isAllPassed = resultsPerTestCase.every((result) => result.isPassed);
+        const submission = await db.submission.create({
+            data: {
+                userId,
+                problemId,
+                sourceCode,
+                language,
+                stdin: testInputs.join("\n"),
+                stdout,
+                stderr,
+                compileOutput,
+                status: isAllPassed ? "Accepted" : "Wrong answer",
+                memory: `${(cumulativeMemory / 1024).toFixed(2)}MB`,
+                time: `${Math.floor(cumulativeTime * 1000)}ms`,
+            },
+        });
+
+        // if all test cases have passed then mark it as "Completed" for the user
+
+        const failedTestIndex = resultsPerTestCase.findIndex((passed) => !passed.isPassed);
 
         if (failedTestIndex !== -1) {
             return res.status(401).json({
@@ -85,10 +128,48 @@ export const runCode = async (req, res) => {
                 compilationMessage: "Code compiled successfully.",
                 message: `Wrong answer on test case ${failedTestIndex + 1}.`,
                 verdict,
-                caseResult: testCaseResults,
+                caseResult: resultsPerTestCase,
             });
         }
+        await db.problemSolved.upsert({
+            where: {
+                userId_problemId: {
+                    problemId,
+                    userId,
+                },
+            },
+            update: {},
+            create: {
+                userId,
+                problemId,
+            },
+        });
 
+        const testCaseResults = resultsPerTestCase.map((res) => ({
+            submissionId: submission.id,
+            testCase: res.testCase,
+            isPassed: res.isPassed,
+            stdout: res.stdout,
+            expected: res.expected,
+            stderr: res.stderr,
+            compileOutput: res.compileOutput,
+            status: res.status,
+            memory: res.memory,
+            time: res.time,
+        }));
+
+        await db.testCaseResult.createMany({
+            data: testCaseResults,
+        });
+
+        const submissionDataWithTestcase = await db.submission.findUnique({
+            where: {
+                id: submission.id,
+            },
+            include: { testCases: true },
+        });
+
+        //TODO: implement language specific code fetching mechanism where you've already done in an specific language
         return res.status(200).json({
             success: true,
             compilationMessage: "Code compiled successfully.",
@@ -96,7 +177,7 @@ export const runCode = async (req, res) => {
             verdict,
             timeTaken: `${Math.floor(cumulativeTime * 1000)}ms`,
             memoryUsed: `${(cumulativeMemory / 1024).toFixed(2)}MB`,
-            caseResult: testCaseResults,
+            caseResult: submissionDataWithTestcase,
         });
     } catch (error) {
         console.error("Error while submitting code:", error);
@@ -107,8 +188,7 @@ export const runCode = async (req, res) => {
     }
 };
 
-
-export const submitCode = async (req, res) => {
+export const runCode = async (req, res) => {
     // 1. Validate request body ✅
     // 2. Match number of inputs and expected outputs  ✅
     // 3. Submit each input/output pair to Judge0

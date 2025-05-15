@@ -90,3 +90,13 @@ export const pollBatchResult = async (tokens, maxRetries = 30, interval = 1000) 
 
     throw new Error("Polling timed out. Submissions took too long to complete.");
 };
+
+
+export const getLanguageName = (languageId) => {
+    if(!languageId) return "Unknown"
+
+    for(let key in JUDGE0_LANGUAGES){
+        if(JUDGE0_LANGUAGES[key] === languageId) return key
+    }
+    return "Unknown"
+}
