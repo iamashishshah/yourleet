@@ -44,6 +44,7 @@ export async function getAllPlaylists(req, res) {
 }
 
 export async function getPlaylist(req, res) {
+    //TODO: test this controller
     const { playlistId } = req.params;
 
     if (!playlistId) {
@@ -88,7 +89,57 @@ export async function getPlaylist(req, res) {
     }
 }
 
-export async function createPlaylist(req, res) {}
+export async function createPlaylist(req, res) {
+    //TODO: test this controller
+    const userId = req.user?.id;
+
+    const { title, description = null } = req.body;
+
+    if (!title) {
+        return res.status(400).json({
+            success: false,
+            message: "Title missing or invalid.",
+        });
+    }
+    if (!userId) {
+        return res.status(400).json({
+            success: false,
+            message: "User ID is missing or invalid.",
+        });
+    }
+
+    try {
+        const playlist = await db.playlist.create({
+            data: {
+                title,
+                description,
+                userId,
+            },
+        });
+
+
+        // Log the playlist response after creation (keep it for debugging in development only)
+        if (process.env.NODE_ENV !== 'production') {
+            console.log("Playlist created:", playlist);
+        }   
+
+        // response after creating playlist
+        console.log("Playlist response after creating:", playlist)
+        res.status(201``).json({
+            success: true,
+            message: "Playlist created successfully.",
+            playlist
+        })
+    } catch (error) {
+        console.error(`[ERROR] Failed to create playlist for user ${req.user.id}:`, error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error. Please try again later.",
+        });
+    }
+}
+
+
 export async function addProblemInPlaylist(req, res) {}
 export async function deletePlaylist(req, res) {}
 export async function deleteProblemFromPlaylist(req, res) {}
