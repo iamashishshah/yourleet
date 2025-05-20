@@ -224,4 +224,72 @@ export async function deletePlaylist(req, res) {
     }
 }
 
-export async function deleteProblemFromPlaylist(req, res) {}
+export async function deleteProblemFromPlaylist(req, res) {
+    const { playlistId } = req.params;
+    const { problemIds } = req.body;
+    const userId = req.user?.id; 
+
+    if (!playlistId || typeof playlistId !== "string") {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid or missing playlist ID.",
+        });
+    }
+
+    if (!Array.isArray(problemIds) || problemIds.length === 0) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid or missing problem IDs.",
+        });
+    }
+
+    try {
+        
+        const playlist = await db.playlist.findUnique({
+            where: { id: playlistId },
+        });
+
+        if (!playlist) {
+            return res.status(404).json({
+                success: false,
+                message: "Playlist not found.",
+            });
+        }
+
+        if (playlist.userId !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: "You do not have permission to modify this playlist.",
+            });
+        }
+
+        
+        const deletedProblems = await db.problemsInPlaylist.deleteMany({
+            where: {
+                playlistId,
+                problemId: {
+                    in: problemIds,
+                },
+            },
+        });
+
+        if (deletedProblems.count === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "No matching problems found to delete.",
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Problems removed from playlist successfully.",
+            deletedCount: deletedProblems.count,
+        });
+    } catch (error) {
+        console.error(`[ERROR] Failed to delete problems from playlist ${playlistId}:`, error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error. Please try again later.",
+        });
+    }
+}
