@@ -149,7 +149,7 @@ export async function addProblemInPlaylist(req, res) {
         });
     }
 
-     const userId = req.user?.id;
+    const userId = req.user?.id;
     if (!userId) {
         return res.status(401).json({
             success: false,
@@ -162,13 +162,13 @@ export async function addProblemInPlaylist(req, res) {
             data: problemIds.map((problemId) => ({ problemId, playlistId })),
         });
 
-       res.status(201).json({
+        res.status(201).json({
             success: true,
             message: `${problemAdded.count} problem(s) added successfully.`,
             problemAdded,
         });
     } catch (error) {
-         console.error(`[ERROR] Failed to add problems for user ${userId}:`, error);
+        console.error(`[ERROR] Failed to add problems for user ${userId}:`, error);
         res.status(500).json({
             success: false,
             message: "Internal server error. Please try again later.",
@@ -176,5 +176,52 @@ export async function addProblemInPlaylist(req, res) {
     }
 }
 
-export async function deletePlaylist(req, res) {}
+export async function deletePlaylist(req, res) {
+    const { playlistId } = req.params;
+    const userId = req.user?.id;
+
+    if (!playlistId) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid or missing playlist ID.",
+        });
+    }
+
+    try {
+        const playlist = await db.playlist.findUnique({
+            where: { id: playlistId },
+        });
+
+        if (!playlist) {
+            return res.status(404).json({
+                success: false,
+                message: "Playlist not found.",
+            });
+        }
+
+        if (playlist.userId !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: "You do not have permission to delete this playlist.",
+            });
+        }
+
+        const deletedPlaylist = await db.playlist.delete({
+            where: { id: playlistId },
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Playlist deleted successfully.",
+            deletedPlaylist,
+        });
+    } catch (error) {
+        console.error(`[ERROR] Failed to delete playlist for user ${userId}:`, error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error. Please try again later.",
+        });
+    }
+}
+
 export async function deleteProblemFromPlaylist(req, res) {}
