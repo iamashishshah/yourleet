@@ -19,6 +19,7 @@ app.use("/api/v1/auth", authRoutes)
 app.use("/api/v1/problems", problemRoutes)
 app.use("/api/v1/code", codeExecutionRoutes)
 app.use("/api/v1/submissions", submissionRoutes)
+app.use("api/v1/playlist", playlistRoutes)
 //TODO: app.use("/u/username", getUser)
 
 
