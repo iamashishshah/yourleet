@@ -117,19 +117,18 @@ export async function createPlaylist(req, res) {
             },
         });
 
-
         // Log the playlist response after creation (keep it for debugging in development only)
-        if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== "production") {
             console.log("Playlist created:", playlist);
-        }   
+        }
 
         // response after creating playlist
-        console.log("Playlist response after creating:", playlist)
+        console.log("Playlist response after creating:", playlist);
         res.status(201``).json({
             success: true,
             message: "Playlist created successfully.",
-            playlist
-        })
+            playlist,
+        });
     } catch (error) {
         console.error(`[ERROR] Failed to create playlist for user ${req.user.id}:`, error);
         res.status(500).json({
@@ -139,7 +138,43 @@ export async function createPlaylist(req, res) {
     }
 }
 
+export async function addProblemInPlaylist(req, res) {
+    const { playlistId } = req.params;
+    const { problemIds } = req.body;
 
-export async function addProblemInPlaylist(req, res) {}
+    if (!Array.isArray(problemIds) || !problemIds.length) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid or missing problems Id's",
+        });
+    }
+
+     const userId = req.user?.id;
+    if (!userId) {
+        return res.status(401).json({
+            success: false,
+            message: "User not authenticated.",
+        });
+    }
+
+    try {
+        const problemAdded = await db.problemsInPlaylist.createMany({
+            data: problemIds.map((problemId) => ({ problemId, playlistId })),
+        });
+
+       res.status(201).json({
+            success: true,
+            message: `${problemAdded.count} problem(s) added successfully.`,
+            problemAdded,
+        });
+    } catch (error) {
+         console.error(`[ERROR] Failed to add problems for user ${userId}:`, error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error. Please try again later.",
+        });
+    }
+}
+
 export async function deletePlaylist(req, res) {}
 export async function deleteProblemFromPlaylist(req, res) {}
